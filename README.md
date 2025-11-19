@@ -66,7 +66,7 @@ An advanced autonomous AI agent that conducts deep, comprehensive research on an
 
 ```bash
 # Clone repository
-git clone [<your-repo-url>](https://github.com/Priyansh-Fanatic/deep_research_agent.git)
+git clone https://github.com/Priyansh-Fanatic/deep_research_agent.git
 cd deep_research_agent
 
 # Create .env file in backend directory
