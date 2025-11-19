@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@keyframes gradient {
+    0%,
+    100% {
+        background-size: 200% 200%;
+        background-position: left center;
+    }
+
+    50% {
+        background-size: 200% 200%;
+        background-position: right center;
+    }
+}
+
+.animate-gradient {
+    animation: gradient 3s ease infinite;
+}
+
+/* Custom scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-thumb-cyan-500\/20::-webkit-scrollbar-thumb {
+    background-color: rgba(6, 182, 212, 0.2);
+    border-radius: 3px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Smooth animations */
+* {
+    scroll-behavior: smooth;
+}
+
+/* Better focus states */
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid rgba(6, 182, 212, 0.5);
+    outline-offset: 2px;
+}
