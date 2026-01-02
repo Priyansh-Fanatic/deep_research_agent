@@ -1,7 +1,11 @@
 'use client';
 import React, { useMemo, type JSX } from 'react';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+
+// Inline cn utility function
+function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 interface TextShimmerProps {
     children: string;

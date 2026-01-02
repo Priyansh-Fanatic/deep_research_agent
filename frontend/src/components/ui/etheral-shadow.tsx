@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useRef, useId, useEffect, CSSProperties } from 'react';
+import React, { useRef, useId, useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import { animate, useMotionValue } from 'framer-motion';
 
 type AnimationPlaybackControls = ReturnType<typeof animate>;
