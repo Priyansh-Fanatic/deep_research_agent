@@ -195,8 +195,9 @@ The agent follows a **LangGraph workflow** with these nodes:
 6. **Output Directory**: `dist`
 7. Add environment variable:
    ```
-   VITE_API_URL=https://your-app.railway.app
+   VITE_API_URL=https://your-backend-app.onrender.com
    ```
+   Replace with your actual Render backend URL (e.g., `https://deep-research-agent-xxxx.onrender.com`)
 8. Deploy!
 
 #### Update CORS
