@@ -16,7 +16,11 @@ app = FastAPI(
 # Allow CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"], # Vite and other dev servers
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://deep-research-agent-1-22jz.onrender.com"  # Your Render frontend URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
