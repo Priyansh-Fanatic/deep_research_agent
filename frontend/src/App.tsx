@@ -89,19 +89,44 @@ function App() {
 
         const clone = reportRef.current.cloneNode(true) as HTMLElement;
 
-        // Strip dark-mode colours for PDF
-        clone.querySelectorAll('*').forEach((el: any) => {
-          const s = el.style;
-          if (s.backgroundImage?.includes('gradient')) { s.backgroundImage = 'none'; s.backgroundColor = '#fff'; }
-          if (s.color?.includes('oklch'))          s.color = '#000';
-          if (s.backgroundColor?.includes('oklch')) s.backgroundColor = '#fff';
-          if (s.backgroundClip === 'text' || s.webkitBackgroundClip === 'text') {
-            s.backgroundClip = 'border-box'; s.webkitBackgroundClip = 'border-box'; s.color = '#000';
-          }
-        });
-
         pdfContainer.appendChild(clone);
         document.body.appendChild(pdfContainer);
+
+        // Strip dark-mode colours for PDF using computed styles because html2canvas
+        // will fail if it encounters 'oklch' in applied CSS classes.
+        const elements = [pdfContainer, ...Array.from(pdfContainer.querySelectorAll('*'))];
+        elements.forEach((el: any) => {
+          const comp = window.getComputedStyle(el);
+          const s = el.style;
+          
+          if (comp.backgroundImage.includes('gradient')) { 
+            s.backgroundImage = 'none'; 
+            s.backgroundColor = '#fff'; 
+          }
+          if (comp.backgroundClip === 'text' || comp.webkitBackgroundClip === 'text') {
+            s.backgroundClip = 'border-box'; 
+            s.webkitBackgroundClip = 'border-box'; 
+            s.color = '#000';
+          }
+
+          const checkAndReplace = (prop: string, fallback: string) => {
+            const val = comp.getPropertyValue(prop);
+            if (val && val.includes('oklch')) {
+              s.setProperty(prop, fallback, 'important');
+            }
+          };
+
+          checkAndReplace('color', '#000');
+          checkAndReplace('background-color', '#fff');
+          checkAndReplace('border-color', '#e4e4e7');
+          checkAndReplace('border-top-color', '#e4e4e7');
+          checkAndReplace('border-right-color', '#e4e4e7');
+          checkAndReplace('border-bottom-color', '#e4e4e7');
+          checkAndReplace('border-left-color', '#e4e4e7');
+          checkAndReplace('text-decoration-color', '#000');
+          checkAndReplace('fill', '#000');
+          checkAndReplace('stroke', '#000');
+        });
 
         const canvas = await html2canvas(pdfContainer, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true });
         document.body.removeChild(pdfContainer);
