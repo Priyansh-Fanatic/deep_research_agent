@@ -1,6 +1,11 @@
+import warnings
+# Suppress the package renaming warning from duckduckgo_search
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*duckduckgo_search.*")
+
 from duckduckgo_search import DDGS
 from typing import List, Dict
 import time
+
 
 def perform_search(query: str, max_results: int = 8) -> List[Dict]:
     """
