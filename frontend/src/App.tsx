@@ -268,9 +268,7 @@ function App() {
           </h1>
 
           <p className="text-zinc-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed px-4">
-            Autonomous research assistant powered by{' '}
-            <span className="text-zinc-300 font-semibold">LangGraph</span> with{' '}
-            <span className="text-zinc-300 font-semibold">multi-provider AI fallbacks</span>
+            An intelligent research assistant that autonomously scours the web to synthesize comprehensive reports on any topic.
           </p>
         </motion.header>
 
@@ -535,13 +533,13 @@ function App() {
 
                 {/* Main content — full width */}
                 <div className="w-full">
-                  <div ref={reportRef} className="report-prose xl:columns-2 gap-10 [column-fill:balance]">
+                  <div ref={reportRef} className="report-prose max-w-4xl mx-auto">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        // H1 — document title spans all columns
+                        // H1 — document title
                         h1: ({ node, ...props }) => (
-                          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-6 mt-0 tracking-tight leading-tight [column-span:all] border-b border-zinc-800 pb-4 break-inside-avoid" {...props} />
+                          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-6 mt-0 tracking-tight leading-tight border-b border-zinc-800 pb-4 break-inside-avoid" {...props} />
                         ),
                         // H2 — major sections with left accent bar
                         h2: ({ node, children, ...props }) => (

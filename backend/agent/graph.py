@@ -233,18 +233,24 @@ def planner_node(state: AgentState):
 
 
 def search_node(state: AgentState):
-    """Executes the search queries with throttling."""
-    import time
+    """Executes the search queries concurrently."""
+    import concurrent.futures
     print("--- SEARCHING ---")
     queries = state["search_queries"]
     results = []
 
-    for idx, query in enumerate(queries):
-        if idx > 0:
-            time.sleep(1.5)  # Throttle between requests
+    def _do_search(query):
         print(f"Searching for: {query}")
-        res = perform_search(query)
-        results.extend(res)
+        return perform_search(query)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {executor.submit(_do_search, q): q for q in queries}
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                res = future.result()
+                results.extend(res)
+            except Exception as e:
+                print(f"Error in concurrent search: {e}")
 
     return {
         "search_results": results,
@@ -253,7 +259,8 @@ def search_node(state: AgentState):
 
 
 def scrape_node(state: AgentState):
-    """Scrapes content from the top search results."""
+    """Scrapes content from the top search results concurrently."""
+    import concurrent.futures
     print("--- SCRAPING ---")
     results = state["search_results"]
     # De-duplicate URLs and take latest results
@@ -271,22 +278,34 @@ def scrape_node(state: AgentState):
     scraped = []
     scraped_urls = []
 
-    for res in unique_results:
+    def _do_scrape(res):
         url = res.get("link")
         if not url:
-            continue
+            return None
         print(f"Scraping: {url}")
         try:
             content = scrape_url(url)
             if content and not content.startswith("Error"):
-                scraped.append(
-                    f"Source: {url}\nTitle: {res.get('title', '')}\nContent:\n{content}"
-                )
-                scraped_urls.append({"url": url, "title": res.get("title", "")})
+                return {
+                    "scraped_str": f"Source: {url}\nTitle: {res.get('title', '')}\nContent:\n{content}",
+                    "url_info": {"url": url, "title": res.get("title", "")}
+                }
             else:
                 print(f"Skipping failed scrape for {url}: {content[:120]}")
         except Exception as e:
             print(f"Failed to scrape {url}: {e}")
+        return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(_do_scrape, r) for r in unique_results]
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                res = future.result()
+                if res:
+                    scraped.append(res["scraped_str"])
+                    scraped_urls.append(res["url_info"])
+            except Exception as e:
+                print(f"Error in concurrent scrape: {e}")
 
     return {
         "scraped_content": scraped,
@@ -297,13 +316,14 @@ def scrape_node(state: AgentState):
 
 def analyze_node(state: AgentState):
     """
-    Runs all three analysis types sequentially (facts, trends, insights)
+    Runs all three analysis types concurrently (facts, trends, insights)
     and stores results in parallel_analyses.
     
     NOTE: LangGraph doesn't support true fan-out to multiple separate nodes
     without the Send API, so we run the analyses in a single node to avoid
     the graph topology bug.
     """
+    import concurrent.futures
     print("--- ANALYZING (facts + trends + insights) ---")
     topic = state["topic"]
     model = state.get("model", "llama-3.3-70b-versatile")
@@ -312,9 +332,14 @@ def analyze_node(state: AgentState):
 
     llm = get_llm(model_name=model)
 
-    facts   = _analyze_facts(topic, search_results, scraped_content, llm)
-    trends  = _analyze_trends(topic, search_results, scraped_content, llm)
-    insights = _analyze_insights(topic, search_results, scraped_content, llm)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        future_facts = executor.submit(_analyze_facts, topic, search_results, scraped_content, llm)
+        future_trends = executor.submit(_analyze_trends, topic, search_results, scraped_content, llm)
+        future_insights = executor.submit(_analyze_insights, topic, search_results, scraped_content, llm)
+
+        facts = future_facts.result()
+        trends = future_trends.result()
+        insights = future_insights.result()
 
     return {
         "parallel_analyses": {
