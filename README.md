@@ -78,7 +78,7 @@ echo "OPENROUTER_API_KEY=your_api_key_here" > .env
 
 ```bash
 # Install Python dependencies
-uv pip install .
+uv pip install -r requirements.txt
 
 # Run FastAPI server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
