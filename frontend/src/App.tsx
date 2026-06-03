@@ -3,7 +3,6 @@ import { Loader2, FileText, Search, CheckCircle, Sparkles, Brain, Download, Copy
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EtheralShadow } from './components/ui/etheral-shadow';
 import { TextShimmer } from './components/ui/text-shimmer';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -33,7 +32,6 @@ function App() {
   const [toastMessage, setToastMessage] = useState('');
   const [thinkingTime, setThinkingTime] = useState(0);
 
-  // New state for Perplexity-style UI
   const [searchQueries, setSearchQueries] = useState<string[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
   const [currentStep, setCurrentStep] = useState('Initializing...');
@@ -45,9 +43,7 @@ function App() {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isResearching) {
-      interval = setInterval(() => {
-        setThinkingTime((prev) => prev + 1);
-      }, 1000);
+      interval = setInterval(() => setThinkingTime((prev) => prev + 1), 1000);
     } else {
       setThinkingTime(0);
     }
@@ -61,9 +57,10 @@ function App() {
   };
 
   const models = [
-    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B (Groq)', description: 'Best Fast Reasoning' },
-    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet (OpenRouter)', description: 'Best Premium Analysis' },
-    { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)', description: 'Best Free Reasoning' }
+    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', description: 'Groq · Fast & Free · Best Default' },
+    { id: 'gemini-2.5-flash',        name: 'Gemini 2.5 Flash', description: 'Google · Speed & Context' },
+    { id: 'openai/gpt-4o-mini',      name: 'GPT-4o Mini', description: 'OpenRouter · Great Analysis' },
+    { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1', description: 'OpenRouter · Deep Reasoning · Free' },
   ];
 
   const showNotification = (message: string) => {
@@ -84,147 +81,47 @@ function App() {
   const downloadReport = async () => {
     if (report && reportRef.current) {
       try {
-        showNotification('Generating PDF...');
-
-        // Create a temporary container for the PDF
+        showNotification('Generating PDF…');
         const pdfContainer = document.createElement('div');
-        pdfContainer.className = 'p-10 bg-white text-black';
-        pdfContainer.style.position = 'fixed';
-        pdfContainer.style.top = '0';
-        pdfContainer.style.left = '0';
-        pdfContainer.style.zIndex = '-9999';
-        pdfContainer.style.width = '210mm'; // A4 width
-        pdfContainer.style.visibility = 'visible'; // Ensure visibility for html2canvas
+        pdfContainer.style.cssText = 'padding:40px;background:#fff;color:#000;position:fixed;top:0;left:0;z-index:-9999;width:210mm;';
 
-        // Clone the report content
         const clone = reportRef.current.cloneNode(true) as HTMLElement;
 
-        // Process the clone to make it printer-friendly (Light Mode)
-
-        // 1. Fix Headings
-        const h1s = clone.querySelectorAll('h1');
-        h1s.forEach((el: any) => {
-          el.className = 'text-4xl font-bold mb-6 pb-4 border-b-2 border-gray-300 text-black';
-        });
-
-        const h2s = clone.querySelectorAll('h2');
-        h2s.forEach((el: any) => {
-          el.className = 'text-2xl font-bold mb-4 mt-8 text-black flex items-center gap-2';
-        });
-
-        const h3s = clone.querySelectorAll('h3');
-        h3s.forEach((el: any) => {
-          el.className = 'text-xl font-semibold mb-3 mt-6 text-gray-800';
-        });
-
-        // 2. Fix Text and Lists
-        const textElements = clone.querySelectorAll('p, li, span, strong');
-        textElements.forEach((el: any) => {
-          el.classList.remove('text-gray-300', 'text-gray-400', 'text-white', 'text-cyan-500');
-          el.classList.add('text-gray-900');
-        });
-
-        // 3. Fix Tables
-        const tables = clone.querySelectorAll('table');
-        tables.forEach((el: any) => {
-          el.className = 'w-full border-collapse text-left my-6 border border-gray-300';
-        });
-
-        const theads = clone.querySelectorAll('thead');
-        theads.forEach((el: any) => {
-          el.className = 'bg-gray-100 text-black font-bold';
-        });
-
-        const ths = clone.querySelectorAll('th');
-        ths.forEach((el: any) => {
-          el.className = 'p-3 border-b-2 border-gray-300 font-bold text-black';
-        });
-
-        const tds = clone.querySelectorAll('td');
-        tds.forEach((el: any) => {
-          el.className = 'p-3 border-b border-gray-200 text-gray-800';
-        });
-
-        // 4. Fix Blockquotes
-        const blockquotes = clone.querySelectorAll('blockquote');
-        blockquotes.forEach((el: any) => {
-          el.className = 'border-l-4 border-blue-500 bg-gray-50 p-4 rounded-r my-6 italic text-gray-700';
-        });
-
-        // 5. Fix Links
-        const links = clone.querySelectorAll('a');
-        links.forEach((el: any) => {
-          el.className = 'text-blue-600 underline';
-        });
-
-        // 6. Strip all gradients and oklch colors (html2canvas doesn't support them)
-        const allElements = clone.querySelectorAll('*');
-        allElements.forEach((el: any) => {
-          // Remove gradient backgrounds
-          const bgImage = el.style.backgroundImage;
-          if (bgImage && bgImage.includes('gradient')) {
-            el.style.backgroundImage = 'none';
-            el.style.backgroundColor = '#ffffff';
-          }
-
-          // Remove any oklch, lab, lch color functions by converting to safe colors
-          const color = el.style.color;
-          const bgColor = el.style.backgroundColor;
-          const borderColor = el.style.borderColor;
-
-          if (color && (color.includes('oklch') || color.includes('lab') || color.includes('lch'))) {
-            el.style.color = '#000000';
-          }
-          if (bgColor && (bgColor.includes('oklch') || bgColor.includes('lab') || bgColor.includes('lch'))) {
-            el.style.backgroundColor = '#ffffff';
-          }
-          if (borderColor && (borderColor.includes('oklch') || borderColor.includes('lab') || borderColor.includes('lch'))) {
-            el.style.borderColor = '#cccccc';
-          }
-
-          // Remove clip-path (gradient text effects)
-          if (el.style.backgroundClip === 'text' || el.style.webkitBackgroundClip === 'text') {
-            el.style.backgroundClip = 'border-box';
-            el.style.webkitBackgroundClip = 'border-box';
-            el.style.color = '#000000';
+        // Strip dark-mode colours for PDF
+        clone.querySelectorAll('*').forEach((el: any) => {
+          const s = el.style;
+          if (s.backgroundImage?.includes('gradient')) { s.backgroundImage = 'none'; s.backgroundColor = '#fff'; }
+          if (s.color?.includes('oklch'))          s.color = '#000';
+          if (s.backgroundColor?.includes('oklch')) s.backgroundColor = '#fff';
+          if (s.backgroundClip === 'text' || s.webkitBackgroundClip === 'text') {
+            s.backgroundClip = 'border-box'; s.webkitBackgroundClip = 'border-box'; s.color = '#000';
           }
         });
 
         pdfContainer.appendChild(clone);
         document.body.appendChild(pdfContainer);
 
-        const canvas = await html2canvas(pdfContainer, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          logging: false,
-          useCORS: true
-        });
-
+        const canvas = await html2canvas(pdfContainer, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true });
         document.body.removeChild(pdfContainer);
 
-        const imgWidth = 210; // A4 width in mm
-        const pageHeight = 297; // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
+        const imgW = 210, pageH = 297;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        let heightLeft = imgH, position = 0;
 
         const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgData = canvas.toDataURL('image/png');
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgW, imgH);
+        heightLeft -= pageH;
         while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
+          position = heightLeft - imgH;
           pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgW, imgH);
+          heightLeft -= pageH;
         }
 
         pdf.save(`research-${topic.replace(/\s+/g, '-').toLowerCase()}.pdf`);
-        showNotification('PDF downloaded successfully!');
-      } catch (error) {
-        console.error('PDF generation failed:', error);
+        showNotification('PDF downloaded!');
+      } catch (err) {
+        console.error(err);
         showNotification('Failed to generate PDF');
       }
     }
@@ -238,119 +135,90 @@ function App() {
     setLogs([]);
     setSearchQueries([]);
     setSources([]);
-    setCurrentStep('Initializing...');
+    setCurrentStep('Initializing…');
     setReport(null);
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const response = await fetch(`${API_URL}/research`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, model: selectedModel }),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server error: ${response.status} - ${errorText}`);
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} — ${text}`);
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error('No response stream available');
-      }
+      if (!reader) throw new Error('No response stream available');
 
       let buffer = '';
-      let hasReceivedData = false;
+      let hasData = false;
       let reportReceived = false;
 
       while (true) {
         const { value, done } = await reader.read();
-
         if (done) {
-          if (!hasReceivedData) {
-            throw new Error('Stream ended without receiving data');
-          }
-          if (!reportReceived) {
-            setIsResearching(false);
-          }
+          if (!hasData) throw new Error('Stream ended without receiving data');
+          if (!reportReceived) setIsResearching(false);
           break;
         }
 
-        hasReceivedData = true;
+        hasData = true;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === 'update') {
+              const msg = data.message || '';
+              if (msg.startsWith('Searching for:')) {
+                setSearchQueries(prev => [...new Set([...prev, msg.replace('Searching for:', '').trim()])]);
+                setCurrentStep('Searching the web…');
+              } else if (msg.startsWith('Scraping:')) {
+                const url = msg.replace('Scraping:', '').trim();
+                setSources(prev => prev.some(s => s.url === url) ? prev : [...prev, { url }]);
+                setCurrentStep('Reading sources…');
+              } else if (msg.includes('ANALYZING'))   setCurrentStep('Analyzing data…');
+              else if (msg.includes('SYNTHESIZING'))   setCurrentStep('Synthesizing findings…');
+              else if (msg.includes('WRITING'))        setCurrentStep('Writing report…');
 
-              if (data.type === 'update') {
-                const message = data.message || '';
-
-                // Parse messages for UI updates
-                if (message.startsWith('Searching for:')) {
-                  const query = message.replace('Searching for:', '').trim();
-                  setSearchQueries(prev => [...new Set([...prev, query])]);
-                  setCurrentStep('Searching...');
-                } else if (message.startsWith('Scraping:')) {
-                  const url = message.replace('Scraping:', '').trim();
-                  setSources(prev => {
-                    if (prev.some(s => s.url === url)) return prev;
-                    return [...prev, { url }];
-                  });
-                  setCurrentStep('Reading sources...');
-                } else if (message.includes('ANALYZING')) {
-                  setCurrentStep('Analyzing data...');
-                } else if (message.includes('SYNTHESIZING')) {
-                  setCurrentStep('Synthesizing findings...');
-                } else if (message.includes('WRITING')) {
-                  setCurrentStep('Writing report...');
-                }
-
-                setLogs(prev => [...prev, {
-                  id: Math.random().toString(36).substr(2, 9),
-                  type: 'update',
-                  message: data.message,
-                  node: data.node,
-                  timestamp: Date.now()
-                }]);
-              } else if (data.type === 'complete') {
-                reportReceived = true;
-                setReport(data.report);
-                setIsResearching(false);
-                showNotification('Research completed successfully!');
-              } else if (data.type === 'error') {
-                setLogs(prev => [...prev, {
-                  id: Math.random().toString(36).substr(2, 9),
-                  type: 'error',
-                  message: data.message,
-                  timestamp: Date.now()
-                }]);
-                setIsResearching(false);
-                showNotification('Research encountered an error');
-              }
-            } catch (parseError) {
-              console.warn('Failed to parse SSE data:', line, parseError);
+              setLogs(prev => [...prev, {
+                id: Math.random().toString(36).substr(2, 9),
+                type: 'update', message: data.message, node: data.node, timestamp: Date.now()
+              }]);
+            } else if (data.type === 'complete') {
+              reportReceived = true;
+              setReport(data.report);
+              setIsResearching(false);
+              showNotification('Research completed!');
+            } else if (data.type === 'error') {
+              setLogs(prev => [...prev, {
+                id: Math.random().toString(36).substr(2, 9),
+                type: 'error', message: data.message, timestamp: Date.now()
+              }]);
+              setIsResearching(false);
+              showNotification('Research encountered an error');
             }
+          } catch (parseErr) {
+            console.warn('Failed to parse SSE:', line, parseErr);
           }
         }
       }
     } catch (error) {
-      console.error('Research error:', error);
+      console.error(error);
       setIsResearching(false);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to connect to research agent';
-      showNotification(errorMessage);
+      const msg = error instanceof Error ? error.message : 'Failed to connect to research agent';
+      showNotification(msg);
       setLogs(prev => [...prev, {
         id: Math.random().toString(36).substr(2, 9),
-        type: 'error',
-        message: errorMessage,
-        timestamp: Date.now()
+        type: 'error', message: msg, timestamp: Date.now()
       }]);
     }
   };
@@ -360,133 +228,131 @@ function App() {
   }, [logs]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-gray-100 relative">
-      {/* Animated Etheral Shadow background */}
-      <div className="fixed inset-0 pointer-events-none opacity-30">
-        <EtheralShadow
-          color="rgba(6, 182, 212, 0.8)"
-          animation={{ scale: 80, speed: 70 }}
-          noise={{ opacity: 0.5, scale: 1.2 }}
-          sizing="fill"
-        />
-      </div>
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 relative overflow-x-hidden font-sans selection:bg-white selection:text-zinc-900">
 
-      {/* Toast Notification */}
+      {/* Toast */}
       <AnimatePresence>
         {showToast && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
+            initial={{ opacity: 0, y: -40 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-4 sm:top-6 left-4 right-4 sm:left-auto sm:right-6 z-50 bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg shadow-2xl flex items-center gap-2 max-w-sm sm:max-w-none mx-auto sm:mx-0"
+            exit={{ opacity: 0, y: -40 }}
+            className="fixed top-4 sm:top-6 right-4 sm:right-6 z-50 flex items-center gap-2.5 bg-white text-zinc-900 px-5 py-3 rounded-lg shadow-2xl border border-zinc-200 max-w-sm"
           >
-            <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 shrink-0" />
-            <span className="text-sm sm:text-base font-medium">{toastMessage}</span>
+            <CheckCircle className="w-4 h-4 shrink-0 text-zinc-900" />
+            <span className="text-sm font-semibold">{toastMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 container mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16 max-w-5xl">
+      <div className="relative z-10 container mx-auto px-4 py-10 sm:py-14 md:py-20 max-w-5xl">
 
-        {/* Header */}
+        {/* ── Header ── */}
         <motion.header
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 sm:mb-12 md:mb-16 text-center"
+          className="mb-10 sm:mb-14 text-center"
         >
-          <div className="inline-flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-full backdrop-blur-sm">
-            <Brain className="w-4 sm:w-5 h-4 sm:h-5 text-cyan-400" />
-            <span className="text-xs sm:text-sm font-medium text-cyan-300">Powered by AI Agents</span>
-            <Zap className="w-3 sm:w-4 h-3 sm:h-4 text-blue-400" />
+          <div className="inline-flex items-center gap-2 mb-5 px-3.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-semibold text-zinc-400 tracking-widest uppercase">
+            <Brain className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Deep AI Agent Research</span>
+            <Zap className="w-3 h-3 text-zinc-600" />
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-4 sm:mb-6 px-2">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 animate-gradient">
-              Deep Research Agent
-            </span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-4 text-white leading-tight">
+            Deep Research Agent
           </h1>
 
-          <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed px-4">
-            Advanced autonomous research assistant that explores topics deeply using
-            <span className="text-cyan-400 font-semibold"> LangGraph</span> and
-            <span className="text-blue-400 font-semibold"> AI-powered analysis</span>
+          <p className="text-zinc-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed px-4">
+            Autonomous research assistant powered by{' '}
+            <span className="text-zinc-300 font-semibold">LangGraph</span> with{' '}
+            <span className="text-zinc-300 font-semibold">multi-provider AI fallbacks</span>
           </p>
         </motion.header>
 
-        {/* Model Selection */}
+        {/* ── Model Selection ── */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="mb-4 sm:mb-6"
+          className="mb-6 sm:mb-8"
         >
-          <label className="block text-xs sm:text-sm font-medium text-gray-400 mb-2 sm:mb-3 px-1">Select AI Model</label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-            {models.map((model) => (
-              <button
-                key={model.id}
-                onClick={() => setSelectedModel(model.id)}
-                disabled={isResearching}
-                className={`relative p-3 sm:p-4 rounded-lg border-2 transition-all text-left ${selectedModel === model.id
-                  ? 'border-cyan-500 bg-cyan-500/10'
-                  : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm sm:text-base font-semibold text-white">{model.name}</span>
-                  {selectedModel === model.id && (
-                    <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-cyan-400" />
-                  )}
-                </div>
-                <span className="text-xs text-gray-400">{model.description}</span>
-              </button>
-            ))}
+          <label className="block text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-3">
+            Select AI Intelligence
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {models.map((model) => {
+              const isActive = selectedModel === model.id;
+              return (
+                <button
+                  key={model.id}
+                  id={`model-${model.id}`}
+                  onClick={() => setSelectedModel(model.id)}
+                  disabled={isResearching}
+                  className={`relative p-4 rounded-lg text-left transition-all duration-200 group bw-card ${
+                    isActive ? 'bw-card-active' : ''
+                  } disabled:opacity-30 disabled:cursor-not-allowed`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`text-sm font-bold transition-colors ${isActive ? 'text-white' : 'text-zinc-300 group-hover:text-white'}`}>
+                      {model.name}
+                    </span>
+                    {isActive
+                      ? <CheckCircle className="w-4 h-4 text-white shrink-0" />
+                      : <div className="w-4 h-4 rounded-full border border-zinc-700 group-hover:border-zinc-500 transition-colors" />
+                    }
+                  </div>
+                  <span className={`text-[11px] leading-relaxed block ${isActive ? 'text-zinc-400' : 'text-zinc-600 group-hover:text-zinc-500'}`}>
+                    {model.description}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </motion.div>
 
-        {/* Search Input */}
+        {/* ── Search Input ── */}
         <motion.form
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           onSubmit={startResearch}
-          className="mb-8 sm:mb-12 relative"
+          className="mb-8 sm:mb-12"
         >
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative flex items-center bg-slate-900 border border-slate-700 rounded-xl p-1.5 sm:p-2 shadow-2xl">
-              <Search className="w-5 sm:w-6 h-5 sm:h-6 text-gray-400 ml-2 sm:ml-4 shrink-0" />
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="What would you like to research today?"
-                className="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 text-sm sm:text-lg px-2 sm:px-4 py-3 sm:py-4"
-                disabled={isResearching}
-              />
-              <button
-                type="submit"
-                disabled={isResearching || !topic.trim()}
-                className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 sm:px-8 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-1.5 sm:gap-2 shrink-0"
-              >
-                {isResearching ? (
-                  <>
-                    <Loader2 className="w-4 sm:w-5 h-4 sm:h-5 animate-spin" />
-                    <span className="hidden sm:inline">Researching...</span>
-                    <span className="sm:hidden">...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />
-                    <span>Research</span>
-                  </>
-                )}
-              </button>
-            </div>
+          <div className="relative flex items-center bg-[#111113] border border-zinc-800 rounded-lg p-2 focus-within:border-white focus-within:shadow-[0_0_0_3px_rgba(255,255,255,0.05)] transition-all duration-200">
+            <Search className="w-5 h-5 text-zinc-600 ml-2 sm:ml-3 shrink-0 transition-colors focus-within:text-white" />
+            <input
+              id="research-topic-input"
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="What would you like to research today?"
+              className="w-full bg-transparent border-none text-zinc-100 placeholder-zinc-600 focus:ring-0 text-sm sm:text-base px-3 py-3 focus:outline-none"
+              disabled={isResearching}
+            />
+            <button
+              id="research-submit-btn"
+              type="submit"
+              disabled={isResearching || !topic.trim()}
+              className="btn-bw-primary px-5 sm:px-8 py-3 text-sm sm:text-sm font-semibold flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed rounded-md"
+            >
+              {isResearching ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="hidden sm:inline">Researching…</span>
+                  <span className="sm:hidden">…</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Research</span>
+                </>
+              )}
+            </button>
           </div>
         </motion.form>
 
-        {/* Progress & Logs (Perplexity Style) */}
+        {/* ── Research Stream ── */}
         <AnimatePresence>
           {isResearching && (
             <motion.div
@@ -495,35 +361,39 @@ function App() {
               exit={{ opacity: 0, height: 0 }}
               className="mb-8 sm:mb-12"
             >
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 sm:p-6 backdrop-blur-sm">
-                {/* Header */}
-                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-cyan-500 blur-lg opacity-20 animate-pulse"></div>
-                    <Loader2 className="w-4 sm:w-5 h-4 sm:h-5 text-cyan-400 animate-spin relative z-10" />
-                  </div>
-                  <span className="text-xs sm:text-sm font-medium text-gray-400">Working...</span>
-                  <span className="text-[10px] sm:text-xs font-mono bg-slate-800 px-1.5 sm:px-2 py-0.5 rounded text-cyan-400 border border-slate-700 ml-auto">
+              <div className="bg-[#111113] border border-zinc-800 rounded-lg p-5 sm:p-7">
+                {/* Header row */}
+                <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-800">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                    Research Stream Active
+                  </span>
+                  <span className="ml-auto text-[11px] font-mono bg-zinc-900 border border-zinc-800 px-2.5 py-0.5 rounded text-zinc-400">
                     {formatTime(thinkingTime)}
                   </span>
                 </div>
 
-                {/* Current Action */}
-                <div className="mb-4 sm:mb-6 pl-4 sm:pl-8">
-                  <TextShimmer className="text-base sm:text-lg font-medium text-gray-200" duration={2}>
+                {/* Current step */}
+                <div className="mb-6">
+                  <TextShimmer className="text-lg sm:text-2xl font-bold text-white tracking-tight" duration={1.8}>
                     {currentStep}
                   </TextShimmer>
                 </div>
 
-                {/* Search Queries */}
+                {/* Search queries */}
                 {searchQueries.length > 0 && (
-                  <div className="mb-4 sm:mb-6 pl-4 sm:pl-8">
-                    <div className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Searching</div>
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                      {searchQueries.map((query, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5 sm:gap-2 bg-slate-800/50 border border-slate-700/50 rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm text-cyan-300/90">
-                          <Search className="w-2.5 sm:w-3 h-2.5 sm:h-3 shrink-0" />
-                          <span className="truncate max-w-[150px] sm:max-w-none">{query}</span>
+                  <div className="mb-6">
+                    <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3">
+                      Search Queries
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {searchQueries.map((q, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-md px-3 py-1.5 text-[11px] text-zinc-400"
+                        >
+                          <Search className="w-3 h-3 text-zinc-600 shrink-0" />
+                          <span className="truncate max-w-[160px] sm:max-w-xs">{q}</span>
                         </div>
                       ))}
                     </div>
@@ -532,14 +402,19 @@ function App() {
 
                 {/* Sources */}
                 {sources.length > 0 && (
-                  <div className="pl-4 sm:pl-8">
+                  <div>
                     <button
                       onClick={() => setIsSourcesExpanded(!isSourcesExpanded)}
-                      className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3 hover:text-gray-300 transition-colors"
+                      className="flex items-center gap-2 text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 hover:text-zinc-400 transition-colors focus:outline-none"
                     >
-                      <span>Reviewing sources</span>
-                      <span className="bg-slate-800 text-gray-400 px-1.5 py-0.5 rounded text-[10px]">{sources.length}</span>
-                      {isSourcesExpanded ? <ChevronUp className="w-2.5 sm:w-3 h-2.5 sm:h-3" /> : <ChevronDown className="w-2.5 sm:w-3 h-2.5 sm:h-3" />}
+                      <span>Reviewed Sources</span>
+                      <span className="bg-zinc-900 border border-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[10px] font-mono">
+                        {sources.length}
+                      </span>
+                      {isSourcesExpanded
+                        ? <ChevronUp className="w-3.5 h-3.5" />
+                        : <ChevronDown className="w-3.5 h-3.5" />
+                      }
                     </button>
 
                     <AnimatePresence>
@@ -551,19 +426,25 @@ function App() {
                           className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-hidden"
                         >
                           {sources.map((source, idx) => (
-                            <div key={idx} className="flex items-center gap-2 sm:gap-3 p-2 rounded-lg bg-slate-800/30 border border-slate-800 hover:bg-slate-800/50 transition-colors truncate">
-                              <div className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
-                                <Globe className="w-2.5 sm:w-3 h-2.5 sm:h-3 text-gray-400" />
+                            <a
+                              key={idx}
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800 bg-zinc-900 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all truncate group"
+                            >
+                              <div className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
+                                <Globe className="w-3.5 h-3.5 text-zinc-500" />
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="text-xs sm:text-sm text-gray-300 truncate font-medium">
-                                  {source.title || new URL(source.url).hostname.replace('www.', '')}
+                                <span className="text-xs text-zinc-300 truncate font-medium group-hover:text-white transition-colors">
+                                  {source.title || (() => { try { return new URL(source.url).hostname.replace('www.', ''); } catch { return source.url; } })()}
                                 </span>
-                                <span className="text-[10px] sm:text-xs text-gray-500 truncate">
-                                  {new URL(source.url).hostname}
+                                <span className="text-[10px] text-zinc-600 truncate">
+                                  {(() => { try { return new URL(source.url).hostname; } catch { return source.url; } })()}
                                 </span>
                               </div>
-                            </div>
+                            </a>
                           ))}
                         </motion.div>
                       )}
@@ -575,114 +456,227 @@ function App() {
           )}
         </AnimatePresence>
 
-        {/* Final Report */}
+        {/* ── Final Report ── */}
         <AnimatePresence>
           {report && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600/20 via-blue-600/20 to-teal-600/20 rounded-2xl blur" />
-                <div className="relative bg-slate-900/90 backdrop-blur border border-slate-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-8 md:p-14 shadow-2xl">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6 sm:mb-10 pb-6 sm:pb-8 border-b border-slate-700/50">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="flex items-center justify-center w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
-                        <FileText className="w-5 sm:w-6 h-5 sm:h-6 text-cyan-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">Research Report</h2>
-                        <p className="text-xs sm:text-sm text-gray-400 mt-0.5 sm:mt-1">Comprehensive analysis complete</p>
-                      </div>
+              {/* ── Report toolbar ── */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-5 border-b border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-800">
+                    <FileText className="w-4 h-4 text-zinc-300" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-bold text-white">Research Report</h2>
+                      <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">COMPLETE</span>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                      <button
-                        onClick={copyToClipboard}
-                        className="flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-400 hover:text-cyan-400 px-3 sm:px-4 py-2 rounded-lg hover:bg-slate-800/50 transition-colors border border-slate-700 hover:border-cyan-500/30 flex-1 sm:flex-initial"
-                      >
-                        {copied ? <Check className="w-3.5 sm:w-4 h-3.5 sm:h-4" /> : <Copy className="w-3.5 sm:w-4 h-3.5 sm:h-4" />}
-                        <span className="hidden sm:inline">{copied ? 'Copied!' : 'Copy'}</span>
-                      </button>
-                      <button
-                        onClick={downloadReport}
-                        className="flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-400 hover:text-blue-400 px-3 sm:px-4 py-2 rounded-lg hover:bg-slate-800/50 transition-colors border border-slate-700 hover:border-blue-500/30 flex-1 sm:flex-initial"
-                      >
-                        <Download className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
-                        <span className="hidden sm:inline">PDF</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setReport(null);
-                          setLogs([]);
-                          setTopic('');
-                        }}
-                        className="hidden sm:flex items-center gap-2 text-xs sm:text-sm text-gray-400 hover:text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-slate-800/50 transition-colors border border-slate-700"
-                      >
-                        New Research
-                      </button>
+                    <p className="text-[11px] text-zinc-600 mt-0.5">{topic}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    id="copy-report-btn"
+                    onClick={copyToClipboard}
+                    className="btn-bw-secondary flex items-center justify-center gap-1.5 text-xs px-3.5 py-2 flex-1 sm:flex-initial font-medium rounded-md"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5 text-zinc-400" />}
+                    <span>{copied ? 'Copied' : 'Copy'}</span>
+                  </button>
+                  <button
+                    id="download-pdf-btn"
+                    onClick={downloadReport}
+                    className="btn-bw-secondary flex items-center justify-center gap-1.5 text-xs px-3.5 py-2 flex-1 sm:flex-initial font-medium rounded-md"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>PDF</span>
+                  </button>
+                  <button
+                    id="new-research-btn"
+                    onClick={() => { setReport(null); setLogs([]); setTopic(''); setSources([]); setSearchQueries([]); }}
+                    className="btn-bw-primary flex items-center justify-center gap-1.5 text-xs px-4 py-2 hidden sm:flex font-semibold rounded-md"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    New Research
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Report document ── */}
+              <div className="flex gap-8 items-start">
+
+                {/* Sidebar — visible on large screens */}
+                <aside className="hidden lg:block w-52 shrink-0 sticky top-8">
+                  <div className="bg-[#111113] border border-zinc-800 rounded-xl p-4">
+                    <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3">In this report</p>
+                    <div className="space-y-1">
+                      {['Overview', 'Key Statistics', 'Market Landscape', 'Analysis', 'Future Outlook', 'Conclusion', 'References'].map((s, i) => (
+                        <div key={i} className="flex items-center gap-2 py-1 group cursor-default">
+                          <span className="text-[10px] font-mono text-zinc-700 w-4">{String(i + 1).padStart(2, '0')}</span>
+                          <span className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors truncate">{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-zinc-800">
+                      <p className="text-[10px] text-zinc-700 mb-1 font-medium">Sources found</p>
+                      <p className="text-lg font-bold text-zinc-300">{sources.length}</p>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-[10px] text-zinc-700 mb-1 font-medium">Research time</p>
+                      <p className="text-lg font-bold text-zinc-300">{formatTime(thinkingTime)}</p>
                     </div>
                   </div>
+                </aside>
 
-                  <div ref={reportRef} className="max-w-none">
+                {/* Main content */}
+                <div className="flex-1 min-w-0">
+                  <div ref={reportRef} className="report-prose">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        h1: ({ node, ...props }) => <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-4 sm:mb-8 mt-6 sm:mt-10 pb-3 sm:pb-4 border-b border-slate-700" {...props} />,
-                        h2: ({ node, ...props }) => <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6 mt-6 sm:mt-10 flex items-center gap-2 sm:gap-3" {...props} />,
-                        h3: ({ node, ...props }) => <h3 className="text-lg sm:text-xl font-semibold text-cyan-300 mb-3 sm:mb-4 mt-4 sm:mt-6" {...props} />,
-                        p: ({ node, ...props }) => <p className="text-gray-300 leading-relaxed mb-4 sm:mb-6 text-sm sm:text-base md:text-lg" {...props} />,
-                        ul: ({ node, ...props }) => <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 ml-3 sm:ml-4" {...props} />,
-                        ol: ({ node, ...props }) => <ol className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 ml-3 sm:ml-4 list-decimal text-gray-300" {...props} />,
-                        li: ({ node, ...props }) => (
-                          <li className="flex items-start gap-2 sm:gap-3 text-gray-300 text-sm sm:text-base">
-                            <span className="text-cyan-500 mt-1 sm:mt-1.5 font-bold">•</span>
-                            <span className="flex-1" {...props} />
+                        // H1 — document title
+                        h1: ({ node, ...props }) => (
+                          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 mt-0 tracking-tight leading-tight" {...props} />
+                        ),
+                        // H2 — major sections with left accent bar
+                        h2: ({ node, children, ...props }) => (
+                          <h2
+                            className="flex items-center gap-3 text-base sm:text-lg font-bold text-white mt-10 mb-4 pb-3 border-b border-zinc-800"
+                            {...props}
+                          >
+                            <span className="inline-block w-1 h-5 bg-white rounded-full shrink-0" />
+                            {children}
+                          </h2>
+                        ),
+                        // H3 — subsections
+                        h3: ({ node, ...props }) => (
+                          <h3 className="text-sm sm:text-base font-semibold text-zinc-200 mt-6 mb-3" {...props} />
+                        ),
+                        // Paragraphs
+                        p: ({ node, ...props }) => (
+                          <p className="text-zinc-400 leading-7 mb-4 text-sm sm:text-base" {...props} />
+                        ),
+                        // Unordered lists
+                        ul: ({ node, ...props }) => (
+                          <ul className="my-4 space-y-2 pl-0" {...props} />
+                        ),
+                        // Ordered lists
+                        ol: ({ node, ...props }) => (
+                          <ol className="my-4 space-y-2 pl-5 list-decimal marker:text-zinc-600" {...props} />
+                        ),
+                        // List items
+                        li: ({ node, children, ordered, ...props }: any) => (
+                          <li className="relative pl-5 text-zinc-400 text-sm leading-7" {...props}>
+                            <span className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-zinc-700" />
+                            {children}
                           </li>
                         ),
+                        // Blockquote — styled callout box
                         blockquote: ({ node, ...props }) => (
-                          <blockquote className="border-l-4 border-cyan-500 bg-slate-800/50 p-3 sm:p-6 rounded-r-lg my-4 sm:my-8 italic text-gray-300 text-sm sm:text-base shadow-lg" {...props} />
+                          <blockquote
+                            className="relative my-6 pl-5 pr-4 py-4 border-l-2 border-zinc-600 bg-zinc-900/60 rounded-r-lg text-zinc-400 italic text-sm leading-7"
+                            {...props}
+                          />
                         ),
+                        // Tables
                         table: ({ node, ...props }) => (
-                          <div className="my-4 sm:my-8 overflow-x-auto rounded-xl border border-slate-700 shadow-2xl bg-slate-900/50 -mx-4 sm:mx-0">
-                            <table className="w-full border-collapse text-left min-w-[500px]" {...props} />
+                          <div className="my-6 overflow-x-auto rounded-xl border border-zinc-800 shadow-lg shadow-black/20">
+                            <table className="w-full border-collapse text-left text-sm" {...props} />
                           </div>
                         ),
-                        thead: ({ node, ...props }) => <thead className="bg-slate-800/80 text-cyan-300" {...props} />,
-                        tbody: ({ node, ...props }) => <tbody className="divide-y divide-slate-700/50" {...props} />,
-                        tr: ({ node, ...props }) => <tr className="hover:bg-slate-800/30 transition-colors" {...props} />,
-                        th: ({ node, ...props }) => <th className="p-3 sm:p-5 font-bold text-xs sm:text-sm uppercase tracking-wider border-b border-slate-600 whitespace-nowrap" {...props} />,
-                        td: ({ node, ...props }) => <td className="p-3 sm:p-5 text-gray-300 text-xs sm:text-base border-b border-slate-700/50" {...props} />,
-                        strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
-                        a: ({ node, ...props }) => <a className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-500/30 underline-offset-4 transition-colors" {...props} />,
+                        thead: ({ node, ...props }) => (
+                          <thead className="bg-zinc-900" {...props} />
+                        ),
+                        tbody: ({ node, ...props }) => (
+                          <tbody className="divide-y divide-zinc-800/60" {...props} />
+                        ),
+                        tr: ({ node, ...props }) => (
+                          <tr className="hover:bg-zinc-900/40 transition-colors" {...props} />
+                        ),
+                        th: ({ node, ...props }) => (
+                          <th
+                            className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 border-b border-zinc-800 whitespace-nowrap"
+                            {...props}
+                          />
+                        ),
+                        td: ({ node, ...props }) => (
+                          <td className="px-4 py-3 text-zinc-400 text-sm" {...props} />
+                        ),
+                        // Bold
+                        strong: ({ node, ...props }) => (
+                          <strong className="font-semibold text-zinc-200" {...props} />
+                        ),
+                        // Links
+                        a: ({ node, ...props }) => (
+                          <a
+                            className="text-zinc-300 underline underline-offset-3 decoration-zinc-700 hover:text-white hover:decoration-zinc-400 transition-colors"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            {...props}
+                          />
+                        ),
+                        // Inline code
+                        code: ({ node, inline, ...props }: any) =>
+                          inline ? (
+                            <code
+                              className="font-mono text-[0.8em] bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700"
+                              {...props}
+                            />
+                          ) : (
+                            <code className="block font-mono text-sm text-zinc-300" {...props} />
+                          ),
+                        // Code block
+                        pre: ({ node, ...props }) => (
+                          <pre
+                            className="my-5 p-4 bg-zinc-900 border border-zinc-800 rounded-xl overflow-x-auto text-sm font-mono text-zinc-300 leading-relaxed"
+                            {...props}
+                          />
+                        ),
+                        // Horizontal rule — section divider
+                        hr: () => (
+                          <hr className="my-8 border-0 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+                        ),
                       }}
                     >
                       {report}
                     </ReactMarkdown>
                   </div>
+
+                  {/* Mobile: new research button */}
+                  <div className="mt-8 pt-6 border-t border-zinc-800 flex sm:hidden">
+                    <button
+                      onClick={() => { setReport(null); setLogs([]); setTopic(''); setSources([]); setSearchQueries([]); }}
+                      className="btn-bw-primary flex items-center gap-2 text-sm px-6 py-3 font-semibold rounded-md w-full justify-center"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Start New Research
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
-          )
-          }
-        </AnimatePresence >
+          )}
+        </AnimatePresence>
 
-        {/* Footer */}
-        {
-          !report && !isResearching && logs.length === 0 && (
-            <motion.footer
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-20 text-center text-gray-500 text-sm"
-            >
-              <p>Built with React, FastAPI, LangGraph, Groq & OpenRouter</p>
-              <p className="mt-2">Advanced AI-powered research at your fingertips</p>
-            </motion.footer>
-          )
-        }
-      </div >
-    </div >
+        {/* ── Footer ── */}
+        {!report && !isResearching && logs.length === 0 && (
+          <motion.footer
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-24 text-center text-zinc-700 text-xs tracking-wider"
+          >
+            <p>Built with React · FastAPI · LangGraph · Groq · OpenRouter</p>
+            <p className="mt-1.5 text-zinc-800">Advanced AI-powered research at your fingertips</p>
+          </motion.footer>
+        )}
+
+      </div>
+    </div>
   );
 }
 

@@ -12,3 +12,4 @@ fastapi
 uvicorn
 gunicorn
 requests
+langchain-google-genai

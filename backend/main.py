@@ -14,14 +14,23 @@ app = FastAPI(
     version="2.0.0"
 )
 
+import os
+
 # Allow CORS for frontend
+frontend_url = os.getenv("FRONTEND_URL")
+origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "https://deep-research-agent-1-22jz.onrender.com",
+]
+if frontend_url:
+    # Ensure no trailing slash for CORS
+    origins.append(frontend_url.rstrip("/"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://deep-research-agent-1-22jz.onrender.com"  # Your Render frontend URL
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,7 +70,10 @@ async def start_research(request: ResearchRequest):
             "past_steps": [],
             "search_queries": [],
             "search_results": [],
+            "scraped_content": [],
+            "scraped_urls": [],
             "research_notes": [],
+            "parallel_analyses": {},
             "report": "",
             "is_finished": False,
             "iteration": 0
@@ -69,7 +81,7 @@ async def start_research(request: ResearchRequest):
         
         try:
             # Stream events from the graph
-            for event in agent_app.stream(initial_state):
+            async for event in agent_app.astream(initial_state):
                 # event is a dict like {'node_name': {state_updates}}
                 for node_name, state_update in event.items():
                     # Send detailed messages based on node
@@ -113,7 +125,7 @@ async def start_research(request: ResearchRequest):
                             }
                             yield f"data: {json.dumps(data)}\n\n"
                     
-                    elif "analyze" in node_name:
+                    elif node_name == "analyze":
                         data = {
                             "type": "update",
                             "node": node_name,
@@ -121,7 +133,7 @@ async def start_research(request: ResearchRequest):
                         }
                         yield f"data: {json.dumps(data)}\n\n"
                     
-                    elif node_name == "synthesize_parallel":
+                    elif node_name == "synthesize":
                         data = {
                             "type": "update",
                             "node": node_name,

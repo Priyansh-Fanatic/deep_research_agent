@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: deep-research-agent-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: GROQ_API_KEY
+        sync: false
+        placeholder: "Enter your Groq API Key"
+      - key: OPENROUTER_API_KEY
+        sync: false
+        placeholder: "Enter your OpenRouter API Key (Optional)"
+      - key: GEMINI_API_KEY
+        sync: false
+        placeholder: "Enter your Gemini API Key"
+      - key: FRONTEND_URL
+        sync: false
+        placeholder: "Enter your Vercel frontend URL (Optional, for CORS security)"
