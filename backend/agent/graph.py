@@ -29,7 +29,7 @@ def analyze_facts_node(state: AgentState):
         else:
             formatted_results += f"- {str(r)}\n"
             
-    formatted_scraped = "\n\n".join(scraped_content[-10:])
+    formatted_scraped = "\n\n".join(scraped_content[-4:])
     
     prompt = f"""
     Topic: {state['topic']}
@@ -85,7 +85,7 @@ def analyze_trends_node(state: AgentState):
         else:
             formatted_results += f"- {str(r)}\n"
             
-    formatted_scraped = "\n\n".join(scraped_content[-10:])
+    formatted_scraped = "\n\n".join(scraped_content[-4:])
     
     prompt = f"""
     Topic: {state['topic']}
@@ -145,7 +145,7 @@ def analyze_insights_node(state: AgentState):
         else:
             formatted_results += f"- {str(r)}\n"
             
-    formatted_scraped = "\n\n".join(scraped_content[-10:])
+    formatted_scraped = "\n\n".join(scraped_content[-4:])
     
     prompt = f"""
     Topic: {state['topic']}
@@ -344,7 +344,7 @@ def scrape_node(state: AgentState):
             print(f"Scraping: {url}")
             try:
                 content = scrape_url(url)
-                scraped.append(f"Source: {url}\nTitle: {res.get('title')}\nContent: {content[:2000]}...")
+                scraped.append(f"Source: {url}\nTitle: {res.get('title')}\nContent: {content[:600]}...")
                 scraped_urls.append({"url": url, "title": res.get('title', '')})
             except Exception as e:
                 print(f"Failed to scrape {url}: {e}")

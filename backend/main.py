@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -28,13 +29,13 @@ app.add_middleware(
 
 class ResearchRequest(BaseModel):
     topic: str
-    model: str = "openai/gpt-4o-mini"  # Default model
+    model: str = "llama-3.3-70b-versatile"  # Default model
     
     class Config:
         json_schema_extra = {
             "example": {
                 "topic": "Artificial Intelligence in Healthcare",
-                "model": "openai/gpt-4o-mini"
+                "model": "llama-3.3-70b-versatile"
             }
         }
 

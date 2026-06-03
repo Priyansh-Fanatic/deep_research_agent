@@ -24,7 +24,7 @@ interface Source {
 
 function App() {
   const [topic, setTopic] = useState('');
-  const [selectedModel, setSelectedModel] = useState('openai/gpt-4o-mini');
+  const [selectedModel, setSelectedModel] = useState('llama-3.3-70b-versatile');
   const [isResearching, setIsResearching] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [report, setReport] = useState<string | null>(null);
@@ -61,9 +61,9 @@ function App() {
   };
 
   const models = [
-    { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast & Affordable' },
-    { id: 'openai/gpt-4o', name: 'GPT-4o', description: 'Most Capable' },
-    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', description: 'Best Reasoning' },
+    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B (Groq)', description: 'Best Fast Reasoning' },
+    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet (OpenRouter)', description: 'Best Premium Analysis' },
+    { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)', description: 'Best Free Reasoning' }
   ];
 
   const showNotification = (message: string) => {
@@ -676,7 +676,7 @@ function App() {
               transition={{ delay: 0.5 }}
               className="mt-20 text-center text-gray-500 text-sm"
             >
-              <p>Built with React, FastAPI, LangGraph & OpenRouter</p>
+              <p>Built with React, FastAPI, LangGraph, Groq & OpenRouter</p>
               <p className="mt-2">Advanced AI-powered research at your fingertips</p>
             </motion.footer>
           )

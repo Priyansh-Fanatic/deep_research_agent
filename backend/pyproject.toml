@@ -1,0 +1,21 @@
+[project]
+name = "deep-research-agent"
+version = "2.0.0"
+description = "Advanced AI-powered research assistant with LangGraph"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-openai",
+    "langchain-core",
+    "langchain-community",
+    "langgraph",
+    "duckduckgo-search",
+    "ddgs",
+    "beautifulsoup4",
+    "python-dotenv",
+    "typer",
+    "rich",
+    "fastapi",
+    "uvicorn",
+    "gunicorn",
+    "requests"
+]
