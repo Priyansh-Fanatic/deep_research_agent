@@ -1,6 +1,9 @@
 import warnings
 # Suppress the package renaming warning from duckduckgo_search
-warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*duckduckgo_search.*")
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*duckduckgo.*")
+warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*ddgs.*")
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 
 from duckduckgo_search import DDGS
 from typing import List, Dict
