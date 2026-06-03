@@ -534,18 +534,18 @@ function App() {
 
                 {/* Main content */}
                 <div className="flex-1 min-w-0">
-                  <div ref={reportRef} className="report-prose">
+                  <div ref={reportRef} className="report-prose lg:columns-2 gap-8 [column-fill:auto]">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        // H1 — document title
+                        // H1 — document title spans all columns
                         h1: ({ node, ...props }) => (
-                          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 mt-0 tracking-tight leading-tight" {...props} />
+                          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-6 mt-0 tracking-tight leading-tight [column-span:all] border-b border-zinc-800 pb-4 break-inside-avoid" {...props} />
                         ),
                         // H2 — major sections with left accent bar
                         h2: ({ node, children, ...props }) => (
                           <h2
-                            className="flex items-center gap-3 text-base sm:text-lg font-bold text-white mt-10 mb-4 pb-3 border-b border-zinc-800"
+                            className="flex items-center gap-3 text-base sm:text-lg font-bold text-white mt-10 mb-4 pb-3 border-b border-zinc-800 break-inside-avoid"
                             {...props}
                           >
                             <span className="inline-block w-1 h-5 bg-white rounded-full shrink-0" />
@@ -554,19 +554,19 @@ function App() {
                         ),
                         // H3 — subsections
                         h3: ({ node, ...props }) => (
-                          <h3 className="text-sm sm:text-base font-semibold text-zinc-200 mt-6 mb-3" {...props} />
+                          <h3 className="text-sm sm:text-base font-semibold text-zinc-200 mt-6 mb-3 break-inside-avoid" {...props} />
                         ),
                         // Paragraphs
                         p: ({ node, ...props }) => (
-                          <p className="text-zinc-400 leading-7 mb-4 text-sm sm:text-base" {...props} />
+                          <p className="text-zinc-400 leading-7 mb-4 text-sm sm:text-base break-inside-avoid" {...props} />
                         ),
                         // Unordered lists
                         ul: ({ node, ...props }) => (
-                          <ul className="my-4 space-y-2 pl-0" {...props} />
+                          <ul className="my-4 space-y-2 pl-0 break-inside-avoid" {...props} />
                         ),
                         // Ordered lists
                         ol: ({ node, ...props }) => (
-                          <ol className="my-4 space-y-2 pl-5 list-decimal marker:text-zinc-600" {...props} />
+                          <ol className="my-4 space-y-2 pl-5 list-decimal marker:text-zinc-600 break-inside-avoid" {...props} />
                         ),
                         // List items
                         li: ({ node, children, ordered, ...props }: any) => (
@@ -578,13 +578,13 @@ function App() {
                         // Blockquote — styled callout box
                         blockquote: ({ node, ...props }) => (
                           <blockquote
-                            className="relative my-6 pl-5 pr-4 py-4 border-l-2 border-zinc-600 bg-zinc-900/60 rounded-r-lg text-zinc-400 italic text-sm leading-7"
+                            className="relative my-6 pl-5 pr-4 py-4 border-l-2 border-zinc-600 bg-zinc-900/60 rounded-r-lg text-zinc-400 italic text-sm leading-7 break-inside-avoid"
                             {...props}
                           />
                         ),
                         // Tables
                         table: ({ node, ...props }) => (
-                          <div className="my-6 overflow-x-auto rounded-xl border border-zinc-800 shadow-lg shadow-black/20">
+                          <div className="my-6 overflow-x-auto rounded-xl border border-zinc-800 shadow-lg shadow-black/20 break-inside-avoid">
                             <table className="w-full border-collapse text-left text-sm" {...props} />
                           </div>
                         ),
