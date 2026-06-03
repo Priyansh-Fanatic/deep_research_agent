@@ -97,6 +97,6 @@ def get_llm(model_name="llama-3.3-70b-versatile", max_tokens=2000):
         )
 
     if fallback_llms:
-        return primary_llm.with_fallbacks(fallback_llms)
+        return primary_llm.with_fallbacks(fallback_llms, exceptions_to_handle=(Exception,))
     
     return primary_llm
