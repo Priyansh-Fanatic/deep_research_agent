@@ -45,7 +45,7 @@ def get_llm(model_name="llama-3.3-70b-versatile", max_tokens=2000):
 
     # 4. Initialize client based on routing decision
     if is_openrouter:
-        return ChatOpenAI(
+        primary_llm = ChatOpenAI(
             model=model_name,
             temperature=0.3,
             api_key=openrouter_key,
@@ -57,10 +57,46 @@ def get_llm(model_name="llama-3.3-70b-versatile", max_tokens=2000):
             }
         )
     else:
-        return ChatOpenAI(
+        primary_llm = ChatOpenAI(
             model=model_name,
             temperature=0.3,
             api_key=groq_key,
             base_url="https://api.groq.com/openai/v1",
             max_tokens=max_tokens
         )
+
+    # 5. Build Fallback LLM options to handle 404 No Endpoints or 429 Rate Limits
+    fallback_llms = []
+
+    # Fallback option A: Groq (llama-3.3-70b-versatile)
+    if is_openrouter and groq_key:
+        fallback_llms.append(
+            ChatOpenAI(
+                model="llama-3.3-70b-versatile",
+                temperature=0.3,
+                api_key=groq_key,
+                base_url="https://api.groq.com/openai/v1",
+                max_tokens=max_tokens
+            )
+        )
+
+    # Fallback option B: OpenRouter Gemini (highly stable free model)
+    if openrouter_key:
+        fallback_llms.append(
+            ChatOpenAI(
+                model="google/gemini-2.5-flash:free",
+                temperature=0.3,
+                api_key=openrouter_key,
+                base_url="https://openrouter.ai/api/v1",
+                max_tokens=max_tokens,
+                default_headers={
+                    "HTTP-Referer": "http://localhost:8000",
+                    "X-Title": "Deep Research Agent"
+                }
+            )
+        )
+
+    if fallback_llms:
+        return primary_llm.with_fallbacks(fallback_llms)
+    
+    return primary_llm
