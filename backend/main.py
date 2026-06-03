@@ -172,6 +172,7 @@ async def start_research(request: ResearchRequest):
         }
     )
 
+@app.head("/health")
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
@@ -181,6 +182,7 @@ def health_check():
         "version": "2.0.0"
     }
 
+@app.head("/")
 @app.get("/")
 def root():
     """Root endpoint with API information"""
