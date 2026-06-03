@@ -31,6 +31,7 @@ function App() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [thinkingTime, setThinkingTime] = useState(0);
+  const [finalTime, setFinalTime] = useState(0);
 
   const [searchQueries, setSearchQueries] = useState<string[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
@@ -44,8 +45,9 @@ function App() {
     let interval: ReturnType<typeof setInterval>;
     if (isResearching) {
       interval = setInterval(() => setThinkingTime((prev) => prev + 1), 1000);
-    } else {
-      setThinkingTime(0);
+    } else if (thinkingTime > 0) {
+      // Freeze the final elapsed time instead of resetting to 0
+      setFinalTime(thinkingTime);
     }
     return () => clearInterval(interval);
   }, [isResearching]);
@@ -132,6 +134,8 @@ function App() {
     if (!topic.trim()) return;
 
     setIsResearching(true);
+    setThinkingTime(0);
+    setFinalTime(0);
     setLogs([]);
     setSearchQueries([]);
     setSources([]);
@@ -507,34 +511,31 @@ function App() {
               </div>
 
               {/* ── Report document ── */}
-              <div className="flex gap-8 items-start">
+              <div className="space-y-6">
 
-                {/* Sidebar — visible on large screens */}
-                <aside className="hidden lg:block w-52 shrink-0 sticky top-8">
-                  <div className="bg-[#111113] border border-zinc-800 rounded-xl p-4">
-                    <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3">In this report</p>
-                    <div className="space-y-1">
-                      {['Overview', 'Key Statistics', 'Market Landscape', 'Analysis', 'Future Outlook', 'Conclusion', 'References'].map((s, i) => (
-                        <div key={i} className="flex items-center gap-2 py-1 group cursor-default">
-                          <span className="text-[10px] font-mono text-zinc-700 w-4">{String(i + 1).padStart(2, '0')}</span>
-                          <span className="text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors truncate">{s}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-zinc-800">
-                      <p className="text-[10px] text-zinc-700 mb-1 font-medium">Sources found</p>
-                      <p className="text-lg font-bold text-zinc-300">{sources.length}</p>
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-[10px] text-zinc-700 mb-1 font-medium">Research time</p>
-                      <p className="text-lg font-bold text-zinc-300">{formatTime(thinkingTime)}</p>
-                    </div>
+                {/* Stats bar — sources + research time */}
+                <div className="flex items-center gap-6 px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Sources</span>
+                    <span className="text-sm font-bold text-zinc-200">{sources.length}</span>
                   </div>
-                </aside>
+                  <div className="w-px h-4 bg-zinc-800" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Research time</span>
+                    <span className="text-sm font-bold text-zinc-200">{formatTime(isResearching ? thinkingTime : finalTime)}</span>
+                  </div>
+                  <div className="w-px h-4 bg-zinc-800" />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Sections</span>
+                    {['Overview', 'Statistics', 'Analysis', 'Outlook', 'Conclusion'].map((s) => (
+                      <span key={s} className="text-[10px] text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-full">{s}</span>
+                    ))}
+                  </div>
+                </div>
 
-                {/* Main content */}
-                <div className="flex-1 min-w-0">
-                  <div ref={reportRef} className="report-prose lg:columns-2 gap-8 [column-fill:auto]">
+                {/* Main content — full width */}
+                <div className="w-full">
+                  <div ref={reportRef} className="report-prose xl:columns-2 gap-10 [column-fill:balance]">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
